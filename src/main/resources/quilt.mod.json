@@ -1,25 +1,25 @@
 {
 	"schema_version": 1,
 	"quilt_loader": {
-		"group": "com.example",
-		"id": "example_mod",
+		"group": "io.github.sleepy_evelyn",
+		"id": "more_mod_tabs",
 		"version": "${version}",
 		"metadata": {
-			"name": "Mod Name",
-			"description": "A short description of your mod.",
+			"name": "More Mod Tabs",
+			"description": "Allows players and modpack makers to automatically add new custom tabs for mods that don't include their own.",
 			"contributors": {
-				"Your name here": "Owner"
+				"sleepy-evelyn": "Sleepy Evelyn"
 			},
 			"contact": {
-				"homepage": "https://example.com/",
-				"issues": "https://github.com/QuiltMC/quilt-template-mod/issues",
-				"sources": "https://github.com/QuiltMC/quilt-template-mod"
+				"homepage": "https://modrinth.com/mod/more-mod-tabs",
+				"issues": "https://github.com/sleepy-evelyn/More-Mod-Tabs/issues",
+				"sources": "https://github.com/sleepy-evelyn/More-Mod-Tabs"
 			},
 			"icon": "assets/example_mod/icon.png"
 		},
 		"intermediate_mappings": "net.fabricmc:intermediary",
 		"entrypoints": {
-			"init": "com.example.example_mod.ExampleMod"
+			"client_init": "io.github.sleepy_evelyn.more_mod_tabs.MMT"
 		},
 		"depends": [
 			{
@@ -36,5 +36,8 @@
 			}
 		]
 	},
-	"mixin": "example_mod.mixins.json"
+	"mixin": "more_mod_tabs.mixins.json",
+	"minecraft": {
+		"environment": "client"
+	}
 }
