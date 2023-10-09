@@ -70,6 +70,8 @@ public class MMT implements ClientModInitializer {
 						MOD_TAB_ENTRIES.put(modId, modTabEntry);
 				}, () -> LOGGER.error("[More Mod Tabs] Failed to load additional creative mod tab entry for mod id: " + modId));
 			} catch (IOException e) {
+				LOGGER.error("[More Mod Tabs] An exception occurred loading a more mod tabs .json resourcepack file. " +
+					"Check the file name and contents are correct");
 				e.printStackTrace();
 			}
 		}
