@@ -4,9 +4,6 @@ import io.github.sleepy_evelyn.more_mod_tabs.MMT;
 import io.github.sleepy_evelyn.more_mod_tabs.ModTabEntry;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.minecraft.block.Block;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -17,7 +14,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ModItemGroupRegistry {
 
@@ -46,30 +42,28 @@ public class ModItemGroupRegistry {
 
 	private static void modifyEntries(Map.Entry<String, List<ItemStack>> itemGroupEntry) {
 		RegistryKey<ItemGroup> modItemGroupKey = createCustomItemGroupKey(itemGroupEntry.getKey());
-		ItemGroupEvents.modifyEntriesEvent(modItemGroupKey).register(
-			(entries -> itemGroupEntry.getValue().forEach(entries::addStack))
-		);
+		ItemGroupEvents.modifyEntriesEvent(modItemGroupKey).register((entries
+			-> itemGroupEntry.getValue().forEach(entries::addStack)));
 	}
 
 	public static boolean tryRegister(String modId, ModTabEntry modTabEntry) {
-		boolean itemGroupExistsAlready = Registries.ITEM_GROUP.getEntries().stream()
-			.anyMatch(itemGroupEntry -> itemGroupEntry.getKey().getValue().getNamespace().equals(modId));
+		boolean itemGroupExistsAlready = Registries.ITEM_GROUP.getEntries().stream().anyMatch(itemGroupEntry
+			-> itemGroupEntry.getKey().getValue().getNamespace().equals(modId));
 		if (itemGroupExistsAlready) return false;
 
-		ItemGroup modItemGroup = FabricItemGroup.builder()
-			.icon(() -> modTabEntry.iconItem().getDefaultStack())
-			.name(Text.literal(modTabEntry.displayName()))
-			.build();
+		ItemGroup modItemGroup = FabricItemGroup.builder().icon(()
+			-> modTabEntry.iconItem().getDefaultStack()).name(Text.literal(modTabEntry.displayName())).build();
 
 		RegistryKey<ItemGroup> modItemGroupKey = createCustomItemGroupKey(modId);
 		Registry.register(Registries.ITEM_GROUP, modItemGroupKey, modItemGroup);
+
+		MMT.LOGGER.info("[More Mod Tabs] Registered Custom Mod Tab Entry with name: " + modItemGroup.getName().getString()
+			+ " and icon: " + modItemGroup.getIcon().getItem().toString());
 		return true;
 	}
 
 	private static RegistryKey<ItemGroup> createCustomItemGroupKey(String modId) {
-		return RegistryKey.of(
-			RegistryKeys.ITEM_GROUP, new Identifier(modId, modId + "_group")
-		);
+		return RegistryKey.of(RegistryKeys.ITEM_GROUP, new Identifier(modId, modId + "_group"));
 	}
 
 	// Define a method to check if an item is vanilla.

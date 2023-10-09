@@ -15,7 +15,7 @@
 				"issues": "https://github.com/sleepy-evelyn/More-Mod-Tabs/issues",
 				"sources": "https://github.com/sleepy-evelyn/More-Mod-Tabs"
 			},
-			"icon": "assets/example_mod/icon.png"
+			"icon": "assets/more_mod_tabs/icon.png"
 		},
 		"intermediate_mappings": "net.fabricmc:intermediary",
 		"entrypoints": {
