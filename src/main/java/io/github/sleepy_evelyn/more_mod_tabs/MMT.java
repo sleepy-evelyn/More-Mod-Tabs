@@ -4,27 +4,36 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import io.github.sleepy_evelyn.more_mod_tabs.item_group.ModItemGroupRegistry;
+import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.resource.ResourceIoSupplier;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
+import net.minecraft.world.WorldEvents;
 import org.quiltmc.loader.api.ModContainer;
 import org.quiltmc.loader.api.QuiltLoader;
 import org.quiltmc.qsl.base.api.entrypoint.client.ClientModInitializer;
 import org.quiltmc.qsl.lifecycle.api.client.event.ClientLifecycleEvents;
+import org.quiltmc.qsl.lifecycle.api.client.event.ClientTickEvents;
+import org.quiltmc.qsl.lifecycle.api.client.event.ClientWorldTickEvents;
+import org.quiltmc.qsl.networking.api.client.ClientLoginConnectionEvents;
+import org.quiltmc.qsl.resource.loader.api.ResourceLoader;
 import org.quiltmc.qsl.resource.loader.api.client.ClientResourceLoaderEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongepowered.asm.mixin.injection.At;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MMT implements ClientModInitializer {
 
@@ -32,7 +41,7 @@ public class MMT implements ClientModInitializer {
 	private static final String MOD_ID = "more_mod_tabs";
 
 	private static final Map<String, ModTabEntry> MOD_TAB_ENTRIES = new HashMap<>();
-	private static final Identifier LAST_VANILLA_ID = new Identifier("minecraft", "spawn_eggs");
+	private final AtomicBoolean STARTED_TICKING = new AtomicBoolean(false);
 
 	private boolean clientReady;
 
@@ -40,6 +49,7 @@ public class MMT implements ClientModInitializer {
 	public void onInitializeClient(ModContainer mod) {
 		ClientResourceLoaderEvents.START_RESOURCE_PACK_RELOAD.register(this::onClientResourcePackReload);
 		ClientLifecycleEvents.READY.register(client -> clientReady = true);
+		ClientWorldTickEvents.START.register(this::onClientTick);
 	}
 
 	private void onClientResourcePackReload(ClientResourceLoaderEvents.StartResourcePackReload.Context context) {
@@ -52,6 +62,20 @@ public class MMT implements ClientModInitializer {
 				"tabs",
 				this::handleMoreModTabsResources)
 			);
+		}
+	}
+
+	private void onClientTick(MinecraftClient client, ClientWorld clientWorld) {
+		// Only fire once when the client world gets loaded
+		if (STARTED_TICKING.compareAndSet(false, true)) {
+			if (clientWorld != null && client.getNetworkHandler() != null) {
+				/* 	Reload item group entries early before the creative screen is opened. Done to form an early cache of the
+					tab stacks before the creative screen is populated so we don't get empty tabs */
+				ItemGroups.tryReloadEntries(client.getNetworkHandler().getEnabledFlags(),
+					client.options.getOperatorItemsTab().get(),
+					clientWorld.getRegistryManager()
+				);
+			}
 		}
 	}
 
@@ -78,10 +102,11 @@ public class MMT implements ClientModInitializer {
 	}
 
 	public static void onItemGroupDisplayReload(ItemGroup itemGroup, Collection<ItemStack> cachedTabStacks) {
-		ModItemGroupRegistry.queueStacks(MOD_TAB_ENTRIES.keySet(), cachedTabStacks);
 		Identifier groupId = Registries.ITEM_GROUP.getId(itemGroup);
-
-		if (groupId != null && groupId.equals(LAST_VANILLA_ID))
-			ModItemGroupRegistry.finishStackRegistration();
+		if (groupId != null) {
+			boolean isVanillaGroup = groupId.getNamespace().equals("minecraft");
+			if (isVanillaGroup)
+				ModItemGroupRegistry.addStacksFromVanillaGroup(cachedTabStacks, MOD_TAB_ENTRIES.keySet());
+		}
 	}
 }
